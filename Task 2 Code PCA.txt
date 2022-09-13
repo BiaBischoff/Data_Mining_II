@@ -1,0 +1,179 @@
+
+#######################################################################################################################
+#Task2 PCA
+#Importing Libraries
+import pandas as pd
+import numpy as np
+import seaborn as sns
+
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+# Libraries for Visualization Purposes
+import matplotlib.pyplot as plt
+
+#Scipy
+
+from sklearn.preprocessing import StandardScaler
+from sklearn import preprocessing
+from sklearn.preprocessing import scale
+from sklearn.decomposition import PCA
+
+# Loading the Clean Churn Dataset
+churn_df = pd.read_csv('/Users/bia/Desktop/Datasets for D212/churn_clean.csv')
+
+#Dataset Size with SHAPE
+print(churn_df.shape)
+
+#Dataset columns
+print(churn_df.columns)
+
+#Dataset Info
+print(churn_df.info)
+
+#Dataset Columns Types
+print(churn_df.dtypes)
+
+#Basic Stats of the data
+print(churn_df.describe())
+
+#Removing some unecessary categorical data
+churn_df = churn_df.drop(columns=['CaseOrder', 'Customer_id', 'Interaction', 'UID', 'Marital', 'Lat', 'Lng', 'City',
+                                  'State', 'County', 'Zip', 'TimeZone', 'Gender', 'Techie', 'Job', 'Item1','Item2',
+                                  'Item3', 'Item4', 'Item5', 'Item6', 'Item7', 'Item8'])
+
+
+#Transforming Categorical Data into Numerical Data
+#Changing Variables from NO/YES to 0/1
+churn_df.Churn.replace({"Yes":1, "No":0}, inplace = True)
+churn_df.Phone.replace({"Yes":1, "No":0}, inplace = True)
+churn_df.PaperlessBilling.replace({"Yes":1, "No":0}, inplace = True)
+churn_df.Port_modem.replace({"Yes":1, "No":0}, inplace = True)
+churn_df.Tablet.replace({"Yes":1, "No":0}, inplace = True)
+churn_df.Multiple.replace({"Yes":1, "No":0}, inplace = True)
+churn_df.OnlineSecurity.replace({"Yes":1, "No":0}, inplace = True)
+churn_df.OnlineBackup.replace({"Yes":1, "No":0}, inplace = True)
+churn_df.DeviceProtection.replace({"Yes":1, "No":0}, inplace = True)
+churn_df.TechSupport.replace({"Yes":1, "No":0}, inplace = True)
+churn_df.StreamingTV.replace({"Yes":1, "No":0}, inplace = True)
+churn_df.StreamingMovies.replace({"Yes":1, "No":0}, inplace = True)
+
+#Creating a dummy variable for some of the categorical variables with 3 or more levels
+dummy1 = pd.get_dummies(churn_df[['Contract', 'PaymentMethod', 'InternetService', 'Area']])
+
+#Adding the results to the master dataframe
+churn_df = pd.concat([churn_df, dummy1], axis=1)
+
+#We have created dummies for the below variables, so we can drop them
+churn_df = churn_df.drop(['Contract', 'PaymentMethod', 'InternetService', 'Area'], 1)
+
+#Dataset Columns Types
+print(churn_df.dtypes)
+
+# #Histogram for Numerical Data
+# dataset = churn_df[['MonthlyCharge', 'Bandwidth_GB_Year', 'Yearly_equip_failure', 'Children', 'Age', 'Income',
+#                     'Outage_sec_perweek','Email', 'Contacts', 'Tenure', 'Churn']]
+# fig = plt.figure(figsize=(15, 12))
+# plt.suptitle('Histograms - Numerical Data \n', horizontalalignment="center", fontstyle="normal", fontsize=24,
+#              fontfamily="sans-serif")
+# for i in range(dataset.shape[1]):
+#     plt.subplot(6, 3, i + 1)
+#     f = plt.gca()
+#     f.set_title(dataset.columns.values[i])
+#     vals = np.size(dataset.iloc[:, i].unique())
+#     if vals >= 100:
+#         vals = 100
+#     plt.hist(dataset.iloc[:, i], bins=vals, color='#ec838a')
+# plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+# plt.show()
+
+# #Scatter Matrix
+churn_num = churn_df[['MonthlyCharge', 'Bandwidth_GB_Year', 'Yearly_equip_failure', 'Children', 'Age', 'Income',
+                    'Outage_sec_perweek','Email', 'Contacts', 'Tenure']]
+# scatter_matrix = pd.plotting.scatter_matrix(churn_num, figsize = [15,15], diagonal = "kde", color = "magenta")
+#
+# for ax in scatter_matrix.ravel():
+#     ax.set_xlabel(ax.get_xlabel(), fontsize = 10, rotation = 90)
+#     ax.set_ylabel(ax.get_ylabel(), fontsize = 10, rotation = 0)
+# plt.title('Scatter Matrix')
+# plt.show()
+
+# #Create dataframe for heatmap bivariate analysis of correlation
+# churn_bivariate = churn_df[['MonthlyCharge', 'Bandwidth_GB_Year', 'Churn', 'Multiple', 'Tenure', 'Outage_sec_perweek']]
+# sns.heatmap(churn_bivariate.corr(), annot=True)
+# plt.show()
+#
+# # Create Seaborn boxplots for continuous variables
+# sns.boxplot('MonthlyCharge', data = churn_df)
+# plt.show()
+# print("MonthlyCharge Stats are: ", churn_df.MonthlyCharge.describe())
+#
+# # Create Seaborn boxplots for continuous variables
+# sns.boxplot('Bandwidth_GB_Year', data = churn_df)
+# plt.show()
+# print("Bandwidth_GB_Year Stats are: ", churn_df.Bandwidth_GB_Year.describe())
+#
+# # Create Seaborn boxplots for continuous variables
+# sns.boxplot('Age', data = churn_df)
+# plt.show()
+# print("Age Stats are: ", churn_df.Age.describe())
+#
+# # Create Seaborn boxplots for continuous variables
+# sns.boxplot('Tenure', data = churn_df)
+# plt.show()
+# print("Tenure Stats are: ", churn_df.Tenure.describe())
+
+# #Finding missing values in my dataset
+# churn_df.isnull().any(axis=1)
+# null_values = churn_df.isna().any()
+# print(null_values)
+
+# #Extract the "Prepared"" dataset
+# churn_df.to_csv('prepared_churn_data_pca.csv')
+# churn_df = pd.read_csv('prepared_churn_data_pca.csv')
+# df = churn_df.columns
+# print('The dataset columns are ', df)
+
+######PCA ANALYSIS#########
+# Normalize the data
+churn_normalized = (churn_num - churn_num.mean()) / churn_num.std()
+pca = PCA(n_components = churn_normalized.shape[1])
+churn_numeric = churn_num[['MonthlyCharge', 'Bandwidth_GB_Year', 'Yearly_equip_failure', 'Children', 'Age', 'Income',
+                    'Outage_sec_perweek','Email', 'Contacts', 'Tenure']]
+pcs_names = []
+for i, col in enumerate(churn_numeric.columns):
+    pcs_names.append('PC' + str(i + 1))
+# print(pcs_names)
+
+pca.fit(churn_normalized)
+churn_pca = pd.DataFrame(pca.transform(churn_normalized), columns = pcs_names)
+
+# plt.plot(pca.explained_variance_ratio_)
+# plt.xlabel('Number of Components')
+# plt.ylabel('Explained Variance')
+# plt.show()
+
+# print('Variance of each component is: ', pca.explained_variance_ratio_)
+
+
+#Extract the eigenvalues
+cov_matrix = np.dot(churn_normalized.T, churn_normalized) / churn_num.shape[0]
+eigenvalues = [np.dot(eigenvector.T, np.dot(cov_matrix, eigenvector)) for eigenvector in pca.components_]
+
+# # Plot the eigenvalues
+# plt.plot(eigenvalues)
+# plt.xlabel('Number of Components')
+# plt.ylabel('Eigenvalue')
+# plt.show()
+
+# print(cov_matrix)
+# #print(eigenvector)
+# print(eigenvalues)
+
+#Select the fewest components
+for pc, var in zip(pcs_names, np.cumsum(pca.explained_variance_ratio_)):
+    print(pc, var)
+
+#Creating Rotation
+rotation = pd.DataFrame(pca.components_.T, columns = pcs_names, index = churn_numeric.columns)
+print('Rotation Matrix is: ', rotation)

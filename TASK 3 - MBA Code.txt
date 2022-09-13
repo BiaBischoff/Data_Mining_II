@@ -1,0 +1,119 @@
+#TASK 3 - Market Basket Analysis
+
+#Importing Libraries
+import pandas as pd
+
+from apyori import apriori
+
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+# Loading the Clean Churn Dataset
+churn_df = pd.read_csv('/Users/bia/Desktop/Datasets for D212/teleco_market_basket.csv')
+
+#Dataset Size with SHAPE
+print('Original Dataset Shape: ', churn_df.shape)
+
+#Dataset columns
+print(churn_df.columns)
+
+#Dataset Info
+print(churn_df.info)
+
+#Dataset Columns Types
+print(churn_df.dtypes)
+
+#Basic Stats of the data
+print(churn_df.describe())
+
+#Finding missing values in my dataset
+churn_df.isnull().any(axis=1)
+null_values = churn_df.isna().any()
+print(null_values)
+
+#Lets drop missing values
+churn_df.dropna(how='all', inplace = True)
+
+churn_df.fillna(0, inplace = True)
+
+#New Dataset
+print('Clean Dataset Shape: ', churn_df.shape)
+
+#Checking if we have "0" in the dataset
+print(churn_df.head())
+
+churn_df.info()
+
+#The algorithm in the apyori package is implemented in such a way that the input to the algorithm is a list of lists
+#rather than a dataframe
+#Converting to a list so we can use Apriori Algorithm
+churn_df_list = []
+for i in range(0, 7501):
+    churn_df_list.append([str(churn_df.values[i,j])for j in range(0,20)])
+churn_df_clean = pd.DataFrame(churn_df_list)
+
+print(churn_df_clean.head())
+
+#Extract the "Prepared"" dataset
+churn_df_clean.to_csv('prepared_churn_data_mba.csv')
+churn_df = pd.read_csv('prepared_churn_data_mba.csv')
+df = churn_df.columns
+print('The dataset columns are ', df)
+
+#Training the Algorithm
+#min_support: The minimum support of relations (float)
+# min_confidence: The minimum confidence of relations (float)
+# min_lift: The minimum lift of relations (float)
+# min_length: The minimum number of items in a rule
+apriori_list = apriori(churn_df_list, min_support=0.003, min_confidence=0.3, min_lift=3, min_lenght=2)
+
+apriori_list = list(apriori_list)
+print(apriori_list[0])
+
+dataset = pd.DataFrame(apriori_list)
+
+print(dataset)
+
+#Since I couldnt visualize all columns in dataset (items, support, ordered_stats)
+print(dataset.columns)
+
+#Lets separate columns on their own
+support = dataset.support
+
+#Antecedent, Consequence, confidence, lift
+antecedent_values = []
+consequent_values = []
+confidence_values = []
+lift_values = []
+
+for i in range(dataset.shape[0]):
+    single_list = dataset['ordered_statistics'][i][0]
+    antecedent_values.append(list(single_list[0]))
+    consequent_values.append(list(single_list[1]))
+    confidence_values.append(single_list[2])
+    lift_values.append(single_list[3])
+
+#From List to Dataframe
+antecedent = pd.DataFrame(antecedent_values)
+consequent = pd.DataFrame(consequent_values)
+#The confidence metric measures the likelihood of a consequent being purchased given the purchase of the antecedent.
+confidence = pd.DataFrame(confidence_values, columns=['CONFIDENCE'])
+#The lift metric measures the influence that the purchase of the antecedent has on the purchase of the consequent.
+lift = pd.DataFrame(lift_values, columns=['LIFT'])
+
+#Concatenate lists into a dataframe
+dataframe = pd.concat([antecedent, consequent, support, confidence, lift], axis = 1)
+dataframe.fillna(value = '', inplace= True)
+
+print(dataframe)
+
+print(dataframe.columns)
+print(dataframe.head())
+
+#Association Rules
+dataframe.columns = ['antecedent', 1, 2, 'consequent', 1, 2, 'support', 'CONFIDENCE', 'LIFT']
+print(dataframe.columns)
+dataframe_1 = dataframe[['antecedent', 'consequent', 'support', 'CONFIDENCE', 'LIFT']]
+
+#Export the dataframe_1 into csv
+dataframe_1.to_csv('dataset_mba_association.csv')
